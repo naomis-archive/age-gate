@@ -67,8 +67,8 @@ import { DateTime } from "luxon";
         const row = new ActionRowBuilder<TextInputBuilder>().addComponents([
           text,
         ]);
-        const modal = new ModalBuilder().addComponents([row]);
-        await interaction.showModal(modal);
+        const modal = new ModalBuilder().addComponents([row]).setTitle("Age Verification").setCustomId("hi");
+        await interaction.showModal(modal).catch(err => console.log(err));
       }
     }
 
@@ -82,16 +82,15 @@ import { DateTime } from "luxon";
       const age = DateTime.fromFormat(rawDate, "dd/MM/yyyy").diffNow(
         "years"
       ).years;
-      if (age < 18) {
+      if (Math.abs(age) < 18) {
         embed.setTitle("Age Verification Failed");
         embed.setDescription(
           `Age verification failed: ${rawDate} (${age} years old)`
         );
         embed.setColor(Colors.DarkRed);
-        await hook.send({});
-        await interaction.reply({
+        await hook.send({embeds: [embed]});
+        await interaction.editReply({
           content: "You are not old enough to join this server.",
-          ephemeral: true,
         });
         await (interaction.member as GuildMember).ban({
           reason: `Age verification failed: ${rawDate} (${age} years old)`,
@@ -102,6 +101,7 @@ import { DateTime } from "luxon";
       embed.setDescription(
         `Age verification passed: ${rawDate} (${age} years old)`
       );
+      await hook.send({embeds: [embed]});
       embed.setColor(Colors.DarkGreen);
       const home =
         bot.guilds.cache.get(process.env.GUILD as string) ||
