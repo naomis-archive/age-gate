@@ -59,16 +59,24 @@ import { DateTime } from "luxon";
   bot.on("interactionCreate", async (interaction) => {
     if (interaction.isButton()) {
       if (interaction.customId === "verify") {
-        const text = new TextInputBuilder()
+        const bDay = new TextInputBuilder()
           .setCustomId("birthday")
           .setLabel("What is your birthday in DD/MM/YYYY format?")
           .setRequired(true)
-          .setStyle(TextInputStyle.Paragraph);
-        const row = new ActionRowBuilder<TextInputBuilder>().addComponents([
-          text,
+          .setStyle(TextInputStyle.Short);
+        const howFind = new TextInputBuilder()
+          .setCustomId("how-find")
+          .setLabel("How did you find our server?")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Paragraph)
+          .setMaxLength(1024);
+        const bDayRow = new ActionRowBuilder<TextInputBuilder>().addComponents([
+          bDay,
         ]);
+        const howFindRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents([howFind]);
         const modal = new ModalBuilder()
-          .addComponents([row])
+          .addComponents([bDayRow, howFindRow])
           .setTitle("Age Verification")
           .setCustomId("hi");
         await interaction.showModal(modal).catch((err) => console.log(err));
@@ -80,6 +88,10 @@ import { DateTime } from "luxon";
       const embed = new EmbedBuilder().setAuthor({
         name: interaction.user.tag,
         iconURL: interaction.user.displayAvatarURL(),
+      });
+      embed.addFields({
+        name: "How did you find us?",
+        value: interaction.fields.getTextInputValue("how-find"),
       });
       const rawDate = interaction.fields.getTextInputValue("birthday");
       const age = Math.abs(
@@ -108,10 +120,12 @@ import { DateTime } from "luxon";
       }
       embed.setTitle("Age Verification Passed");
       embed.setDescription(
-        `Age verification passed: ${rawDate} (${Math.abs(age)} years old)`
+        `Age verification passed: ${rawDate} (${Math.abs(
+          Math.floor(age)
+        )} years old)`
       );
-      await hook.send({ embeds: [embed] });
       embed.setColor(Colors.DarkGreen);
+      await hook.send({ embeds: [embed] });
       const home =
         bot.guilds.cache.get(process.env.GUILD as string) ||
         (await bot.guilds.fetch(process.env.GUILD as string));
